@@ -1,0 +1,37 @@
+import logging
+import os
+from deepsearcher.offline_loading import load_from_local_files
+from deepsearcher.online_query import retrieve
+from deepsearcher.configuration import Configuration, init_config
+from deepsearcher.tools import log
+
+# Suppress unnecessary logging from third-party libraries
+logging.getLogger("httpx").setLevel(logging.WARNING)
+
+def main():
+    # Step 1: Initialize configuration
+    config = Configuration()
+    config.set_provider_config("llm", "Ollama", {
+        "model": "qwen2.5-30K:72b-instruct-q8_0",
+        "base_url": "http://192.168.5.233:11434"
+        })
+    config.set_provider_config("embedding", "OllamaEmbedding", {
+        "base_url": "http://192.168.5.233:11434",
+        "model": "quentinz/bge-large-zh-v1.5:f32"
+    })
+    # Configure Vector Database (Milvus) and File Loader (UnstructuredLoader)
+    config.set_provider_config("vector_db", "Milvus", {"uri": "./milvus.db", "token": ""})
+    config.set_provider_config("file_loader", "PDFLoader", {})
+
+    # Apply the configuration
+    init_config(config)
+
+    # Step 3: retrieve the data
+    question = "What is Diffusion Model?"  # Replace with your actual question
+    results, _, _ = retrieve(question)    
+    for result in results:
+        log.color_print(result)
+        log.info("=" * 50)
+
+if __name__ == "__main__":
+    main()
